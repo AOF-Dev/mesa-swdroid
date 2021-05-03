@@ -54,6 +54,7 @@ with_tests = get_option('build-tests')
 with_aco_tests = get_option('build-aco-tests')
 with_glx_read_only_text = get_option('glx-read-only-text')
 with_glx_direct = get_option('glx-direct')
+with_glx_fake = get_option('glx-fake')
 with_osmesa = get_option('osmesa')
 with_swr_arches = get_option('swr-arches')
 with_vulkan_overlay_layer = get_option('vulkan-overlay-layer')
@@ -457,7 +458,7 @@ if not ['windows', 'freebsd', 'openbsd', 'haiku'].contains(host_machine.system()
 endif
 
 if with_glx != 'disabled'
-  if not (with_platform_x11 and with_any_opengl)
+  if not ((with_platform_x11 or with_glx_fake) and with_any_opengl)
     error('Cannot build GLX support without X11 platform support and at least one OpenGL API')
   elif with_glx == 'gallium-xlib'
     if not with_gallium
