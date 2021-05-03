@@ -421,6 +421,12 @@ option(
   description : 'Enable direct rendering in GLX and EGL for DRI',
 )
 option(
+  'glx-fake',
+  type : 'boolean',
+  value : false,
+  description : 'Build fake GLX libGL.so.1 wrapper',
+)
+option(
   'prefer-iris',
   type : 'boolean',
   value : true,
