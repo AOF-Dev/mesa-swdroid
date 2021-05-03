@@ -77,6 +77,7 @@ static const struct {
    { _EGL_PLATFORM_HAIKU, "haiku" },
    { _EGL_PLATFORM_SURFACELESS, "surfaceless" },
    { _EGL_PLATFORM_DEVICE, "device" },
+   { _EGL_PLATFORM_SWDROID, "swdroid" },
 };
 
 
