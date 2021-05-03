@@ -95,8 +95,10 @@ if with_dri2
 
   files_egl += files(
     'drivers/dri2/platform_device.c',
-    'drivers/dri2/platform_surfaceless.c',
   )
+  if not with_platform_swdroid
+    files_egl += files('drivers/dri2/platform_surfaceless.c')
+  endif
   if with_platform_x11
     files_egl += files('drivers/dri2/platform_x11.c')
     if with_dri3
@@ -125,6 +127,10 @@ if with_dri2
   if with_platform_android
     deps_for_egl += dep_android
     files_egl += files('drivers/dri2/platform_android.c')
+  endif
+  if with_platform_swdroid
+    deps_for_egl += dep_android
+    files_egl += files('drivers/dri2/platform_swdroid.c')
   endif
 elif with_platform_haiku
   incs_for_egl += inc_haikugl
