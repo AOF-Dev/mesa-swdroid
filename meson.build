@@ -341,6 +341,7 @@ if _platforms.contains('auto')
 endif
 
 with_platform_android = _platforms.contains('android')
+with_platform_swdroid = _platforms.contains('swdroid')
 with_platform_x11 = _platforms.contains('x11')
 with_platform_wayland = _platforms.contains('wayland')
 with_platform_haiku = _platforms.contains('haiku')
@@ -355,6 +356,8 @@ endif
 with_glx = get_option('glx')
 if with_glx == 'auto'
   if with_platform_android
+    with_glx = 'disabled'
+  elif with_platform_swdroid
     with_glx = 'disabled'
   elif with_dri
     with_glx = 'dri'
@@ -448,7 +451,7 @@ endif
 
 # Android uses emutls for versions <= P/28. For USE_ELF_TLS we need ELF TLS.
 use_elf_tls = false
-if not ['windows', 'freebsd', 'openbsd', 'haiku'].contains(host_machine.system()) and (not with_platform_android or get_option('platform-sdk-version') >= 29)
+if not ['windows', 'freebsd', 'openbsd', 'haiku'].contains(host_machine.system()) and (not (with_platform_android or with_platform_swdroid) or get_option('platform-sdk-version') >= 29)
   pre_args += '-DUSE_ELF_TLS'
   use_elf_tls = true
 endif
@@ -882,6 +885,18 @@ if with_platform_android
   pre_args += [
     '-DHAVE_ANDROID_PLATFORM',
     '-DANDROID',
+    '-DANDROID_API_LEVEL=' + get_option('platform-sdk-version').to_string()
+  ]
+endif
+if with_platform_swdroid
+  dep_android = [
+    dependency('android'),
+  ]
+  if get_option('platform-sdk-version') >= 26
+    dep_android += dependency('nativewindow')
+  endif
+  pre_args += [
+    '-DHAVE_SWDROID_PLATFORM',
     '-DANDROID_API_LEVEL=' + get_option('platform-sdk-version').to_string()
   ]
 endif
@@ -1484,7 +1499,7 @@ with_gallium_drisw_kms = false
 dep_libdrm = dependency(
   'libdrm', version : '>=' + _drm_ver,
   # GNU/Hurd includes egl_dri2, without drm.
-  required : (with_dri2 and host_machine.system() != 'gnu') or with_dri3
+  required : (with_dri2 and host_machine.system() != 'gnu' and (not with_platform_swdroid)) or with_dri3
 )
 if dep_libdrm.found()
   pre_args += '-DHAVE_LIBDRM'
@@ -2027,7 +2042,9 @@ if with_egl
 endif
 lines += 'GBM:             ' + (with_gbm ? 'yes' : 'no')
 if with_egl or with_any_vk
-  _platforms += 'surfaceless'
+  if not with_platform_swdroid
+    _platforms += 'surfaceless'
+  endif
   if with_gbm
     _platforms += 'drm'
   endif
