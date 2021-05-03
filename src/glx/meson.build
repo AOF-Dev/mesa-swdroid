@@ -73,6 +73,13 @@ files_libglx = files(
   'xfont.c',
 )
 
+if with_glx_fake
+  files_libglx = files(
+    'fakeglx.c',
+  )
+  glx_generated = []
+endif
+
 extra_libs_libglx = []
 extra_deps_libgl = []
 extra_ld_args_libgl = []
