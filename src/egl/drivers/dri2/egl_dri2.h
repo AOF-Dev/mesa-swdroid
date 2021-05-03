@@ -69,6 +69,10 @@ struct zwp_linux_dmabuf_v1;
 #include <hardware/gralloc.h>
 #endif /* HAVE_ANDROID_PLATFORM */
 
+#ifdef HAVE_SWDROID_PLATFORM
+#include <android/native_window.h>
+#endif /* HAVE_SWDROID_PLATFORM */
+
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldevice.h"
@@ -340,6 +344,13 @@ struct dri2_egl_surface
    } *color_buffers, *back;
 #endif
 
+#ifdef HAVE_SWDROID_PLATFORM
+   ANativeWindow *window;
+   ANativeWindow *drawable;
+   ANativeWindow_Buffer buffer;
+   size_t buffer_size;
+#endif
+
    /* surfaceless and device */
    __DRIimage           *front;
    unsigned int         visual;
@@ -513,8 +524,27 @@ dri2_initialize_android(_EGLDisplay *disp)
 }
 #endif
 
+#ifdef HAVE_SWDROID_PLATFORM
+EGLBoolean
+dri2_initialize_swdroid(_EGLDisplay *disp);
+#else
+static inline EGLBoolean
+dri2_initialize_swdroid(_EGLDisplay *disp)
+{
+   return _eglError(EGL_NOT_INITIALIZED, "Android (software rendering) platform not built");
+}
+#endif
+
+#ifndef HAVE_SWDROID_PLATFORM
 EGLBoolean
 dri2_initialize_surfaceless(_EGLDisplay *disp);
+#else
+static inline EGLBoolean
+dri2_initialize_surfaceless(_EGLDisplay *disp)
+{
+   return _eglError(EGL_NOT_INITIALIZED, "Surfaceless platform not built");
+}
+#endif
 
 EGLBoolean
 dri2_initialize_device(_EGLDisplay *disp);
