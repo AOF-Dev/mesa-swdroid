@@ -61,6 +61,9 @@ struct dri_sw_displaytarget
    void *data;
    void *mapped;
    const void *front_private;
+   
+   void *old_data;
+   char *buffer;
 };
 
 struct dri_sw_winsys
@@ -154,6 +157,8 @@ dri_sw_displaytarget_create(struct sw_winsys *winsys,
 
    if(!dri_sw_dt->data)
       goto no_data;
+      
+   dri_sw_dt->old_data = dri_sw_dt->data;
 
    *stride = dri_sw_dt->stride;
    return (struct sw_displaytarget *)dri_sw_dt;
@@ -169,6 +174,8 @@ dri_sw_displaytarget_destroy(struct sw_winsys *ws,
                              struct sw_displaytarget *dt)
 {
    struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
+   
+   dri_sw_dt->data = dri_sw_dt->old_data;
 
    if (dri_sw_dt->shmid >= 0) {
 #ifdef HAVE_SYS_SHM_H
@@ -198,6 +205,31 @@ dri_sw_displaytarget_map(struct sw_winsys *ws,
    return dri_sw_dt->mapped;
 }
 
+static void *
+dri_sw_displaytarget_get_buffer(struct sw_winsys *ws,
+                         struct sw_displaytarget *dt,
+                         void *context_private,
+                         unsigned flags)
+{
+   struct dri_sw_winsys *dri_sw_ws = dri_sw_winsys(ws);
+   struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
+   struct dri_drawable *dri_drawable = (struct dri_drawable *)context_private;
+   
+   dri_sw_dt->buffer = NULL;
+   dri_sw_ws->lf->get_buffer(dri_drawable, &dri_sw_dt->buffer);
+   if (dri_sw_dt->buffer) {
+      dri_sw_dt->data = dri_sw_dt->buffer;
+   }
+   
+   dri_sw_dt->mapped = dri_sw_dt->data;
+   if (!dri_sw_dt->buffer && dri_sw_dt->front_private && (flags & PIPE_MAP_READ)) {
+      struct dri_sw_winsys *dri_sw_ws = dri_sw_winsys(ws);
+      dri_sw_ws->lf->get_image((void *)dri_sw_dt->front_private, 0, 0, dri_sw_dt->width, dri_sw_dt->height, dri_sw_dt->stride, dri_sw_dt->data);
+   }
+   dri_sw_dt->map_flags = flags;
+   return dri_sw_dt->mapped;
+}
+
 static void
 dri_sw_displaytarget_unmap(struct sw_winsys *ws,
                            struct sw_displaytarget *dt)
@@ -205,7 +237,9 @@ dri_sw_displaytarget_unmap(struct sw_winsys *ws,
    struct dri_sw_displaytarget *dri_sw_dt = dri_sw_displaytarget(dt);
    if (dri_sw_dt->front_private && (dri_sw_dt->map_flags & PIPE_MAP_WRITE)) {
       struct dri_sw_winsys *dri_sw_ws = dri_sw_winsys(ws);
-      dri_sw_ws->lf->put_image2((void *)dri_sw_dt->front_private, dri_sw_dt->data, 0, 0, dri_sw_dt->width, dri_sw_dt->height, dri_sw_dt->stride);
+      if (!dri_sw_dt->buffer) {
+         dri_sw_ws->lf->put_image2((void *)dri_sw_dt->front_private, dri_sw_dt->data, 0, 0, dri_sw_dt->width, dri_sw_dt->height, dri_sw_dt->stride);
+      }
    }
    dri_sw_dt->map_flags = 0;
    dri_sw_dt->mapped = NULL;
@@ -317,6 +351,8 @@ dri_create_sw_winsys(const struct drisw_loader_funcs *lf)
    ws->base.displaytarget_unmap = dri_sw_displaytarget_unmap;
 
    ws->base.displaytarget_display = dri_sw_displaytarget_display;
+   
+   ws->base.displaytarget_get_buffer = dri_sw_displaytarget_get_buffer;
 
    return &ws->base;
 }
