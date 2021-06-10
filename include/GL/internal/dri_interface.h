@@ -724,6 +724,10 @@ struct __DRIswrastLoaderExtensionRec {
     GLboolean (*getImageShm2)(__DRIdrawable *readable,
                               int x, int y, int width, int height,
                               int shmid, void *loaderPrivate);
+                     
+                           
+    void (*getDrawableBuffer)(__DRIdrawable *drawable,
+		     char **data, void *loaderPrivate);
 };
 
 /**
