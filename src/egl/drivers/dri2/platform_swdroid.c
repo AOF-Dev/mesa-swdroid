@@ -139,15 +139,26 @@ swrastGetDrawableInfo(__DRIdrawable * draw,
 }
 
 static void
+swrastGetDrawableBuffer(__DRIdrawable * draw,
+                      char **data,
+                      void *loaderPrivate)
+{
+   struct dri2_egl_surface *dri2_surf = loaderPrivate;
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(dri2_surf->base.Resource.Display);
+   
+   ANativeWindow_lock(dri2_surf->window, &dri2_surf->buffer, NULL);
+   *data = dri2_surf->buffer.bits;
+}
+
+static void
 swrastPutImage(__DRIdrawable * draw, int op,
                int x, int y, int w, int h,
                char *data, void *loaderPrivate)
 {
    struct dri2_egl_surface *dri2_surf = loaderPrivate;
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(dri2_surf->base.Resource.Display);
-
-   ANativeWindow_lock(dri2_surf->window, &dri2_surf->buffer, NULL);
-   memcpy(dri2_surf->buffer.bits, data, dri2_surf->buffer_size);
+   
+   /* Ignore data and post directly, because buffer has been changed after swrastGetDrawableBuffer(). */
    ANativeWindow_unlockAndPost(dri2_surf->window);
 }
 
@@ -447,6 +458,7 @@ static const __DRIswrastLoaderExtension swrast_loader_extension = {
    .getDrawableInfo = swrastGetDrawableInfo,
    .putImage        = swrastPutImage,
    .getImage        = swrastGetImage,
+   .getDrawableBuffer = swrastGetDrawableBuffer,
 };
 
 static const __DRIimageLoaderExtension image_loader_extension = {
