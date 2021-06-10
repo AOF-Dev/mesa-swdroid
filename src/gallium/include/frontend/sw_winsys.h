@@ -134,6 +134,13 @@ struct sw_winsys
    void 
    (*displaytarget_destroy)( struct sw_winsys *ws, 
                              struct sw_displaytarget *dt );
+                             
+                            
+   void *
+   (*displaytarget_get_buffer)( struct sw_winsys *ws, 
+                         struct sw_displaytarget *dt,
+                         void *context_private,
+                         unsigned flags );
 };
 
 
