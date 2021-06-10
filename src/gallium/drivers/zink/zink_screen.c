@@ -758,7 +758,14 @@ zink_flush_frontbuffer(struct pipe_screen *pscreen,
 
    if (!winsys)
      return;
-   void *map = winsys->displaytarget_map(winsys, res->dt, 0);
+     
+   void *map;
+   if (winsys->displaytarget_get_buffer) {
+      map = winsys->displaytarget_get_buffer(winsys, res->dt, winsys_drawable_handle, 0);
+   }
+   else {
+      map = winsys->displaytarget_map(winsys, res->dt, 0);
+   }
 
    if (map) {
       struct pipe_transfer *transfer = NULL;
