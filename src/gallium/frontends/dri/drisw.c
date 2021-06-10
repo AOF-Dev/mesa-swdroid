@@ -66,6 +66,17 @@ put_image(__DRIdrawable *dPriv, void *data, unsigned width, unsigned height)
 }
 
 static inline void
+get_buffer(__DRIdrawable *dPriv, char **data)
+{
+   __DRIscreen *sPriv = dPriv->driScreenPriv;
+   const __DRIswrastLoaderExtension *loader = sPriv->swrast_loader;
+   
+   if (loader->getDrawableBuffer) {
+      loader->getDrawableBuffer(dPriv, data, dPriv->loaderPrivate);
+   }
+}
+
+static inline void
 put_image2(__DRIdrawable *dPriv, void *data, int x, int y,
            unsigned width, unsigned height, unsigned stride)
 {
@@ -173,6 +184,15 @@ drisw_put_image(struct dri_drawable *drawable,
    __DRIdrawable *dPriv = drawable->dPriv;
 
    put_image(dPriv, data, width, height);
+}
+
+static void
+drisw_get_buffer(struct dri_drawable *drawable,
+                char **data)
+{
+   __DRIdrawable *dPriv = drawable->dPriv;
+
+   get_buffer(dPriv, data);
 }
 
 static void
@@ -484,14 +504,18 @@ static const __DRIextension *drisw_robust_screen_extensions[] = {
 static const struct drisw_loader_funcs drisw_lf = {
    .get_image = drisw_get_image,
    .put_image = drisw_put_image,
-   .put_image2 = drisw_put_image2
+   .put_image2 = drisw_put_image2,
+   
+   .get_buffer = drisw_get_buffer,
 };
 
 static const struct drisw_loader_funcs drisw_shm_lf = {
    .get_image = drisw_get_image,
    .put_image = drisw_put_image,
    .put_image2 = drisw_put_image2,
-   .put_image_shm = drisw_put_image_shm
+   .put_image_shm = drisw_put_image_shm,
+   
+   .get_buffer = drisw_get_buffer,
 };
 
 static const __DRIconfig **
