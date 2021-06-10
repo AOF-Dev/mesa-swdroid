@@ -22,6 +22,9 @@ struct drisw_loader_funcs
    void (*put_image_shm) (struct dri_drawable *dri_drawable,
                           int shmid, char *shmaddr, unsigned offset, unsigned offset_x,
                           int x, int y, unsigned width, unsigned height, unsigned stride);
+                          
+   void (*get_buffer) (struct dri_drawable *dri_drawable,
+                      char **data);
 };
 
 #endif
