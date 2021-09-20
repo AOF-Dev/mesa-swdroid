@@ -40,9 +40,13 @@ libvirgl = static_library(
   dependencies : [dep_libdrm, idep_mesautil],
 )
 
+driver_virgl_link_with = [libvirgl, libvirglvtest]
+if dep_libdrm.found()
+  driver_virgl_link_with += [libvirgldrm]
+endif
 driver_virgl = declare_dependency(
   compile_args : '-DGALLIUM_VIRGL',
-  link_with : [libvirgl, libvirgldrm, libvirglvtest],
+  link_with : driver_virgl_link_with,
 )
 
 if with_tests

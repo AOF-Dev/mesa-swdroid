@@ -146,7 +146,9 @@ else
 endif
 if with_gallium_virgl
   subdir('winsys/virgl/common')
-  subdir('winsys/virgl/drm')
+  if dep_libdrm.found()
+    subdir('winsys/virgl/drm')
+  endif
   subdir('winsys/virgl/vtest')
   subdir('drivers/virgl')
 else
